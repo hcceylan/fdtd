@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FDTD Simülasyonu - Ana Sayfa</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: linear-gradient(135deg, #0b0f14 0%, #1a1f2e 100%);
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: #e6edf3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 900px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #58a6ff 0%, #00ff88 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      font-size: 1.25rem;
+      color: #8b949e;
+      margin-bottom: 48px;
+      line-height: 1.6;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+    .card {
+      background: rgba(22,27,34,0.8);
+      border: 1px solid #30363d;
+      border-radius: 16px;
+      padding: 32px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+      text-align: left;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: #58a6ff;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .card-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+      color: #e6edf3;
+    }
+    .card p {
+      color: #8b949e;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .card-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tag {
+      background: rgba(88,166,255,0.15);
+      color: #58a6ff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .footer {
+      color: #6e7681;
+      font-size: 14px;
+    }
+    .footer a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(35,134,54,0.2);
+      color: #7ee787;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge">🎓 Gazi Üniversitesi - 1998 Bitirme Projesi</div>
+    <h1>FDTD Simülasyonu</h1>
+    <p class="subtitle">
+      Sonlu Farklar Zaman Domeninde (FDTD) yöntemi ile elektromanyetik dalga yayılımının 
+      interaktif simülasyonu. Maxwell denklemlerini gerçek zamanlı çözün ve görselleştirin.
+    </p>
+
+    <div class="cards">
+      <a href="interactive_fdtd_editor.html" class="card">
+        <div class="card-icon">📊</div>
+        <h2>1D FDTD Editörü</h2>
+        <p>
+          Tek boyutlu FDTD simülasyonu. Fareyle malzeme ekleyin, farklı geometriler deneyin 
+          ve dalga yayılımını gerçek zamanlı izleyin.
+        </p>
+        <div class="card-features">
+          <span class="tag">İnteraktif</span>
+          <span class="tag">Malzeme Seçimi</span>
+          <span class="tag">5 Geometri</span>
+          <span class="tag">Kaydet/Yükle</span>
+        </div>
+      </a>
+
+      <a href="interactive_fdtd_3d.html" class="card">
+        <div class="card-icon">🌐</div>
+        <h2>3D FDTD Simülasyonu</h2>
+        <p>
+          Üç boyutlu elektromanyetik dalga görselleştirmesi. WebGL ile render edilen 
+          3D uzayda dalga yayılımını gözlemleyin.
+        </p>
+        <div class="card-features">
+          <span class="tag">3D Görselleştirme</span>
+          <span class="tag">Şekil Araçları</span>
+          <span class="tag">Kamera Kontrolü</span>
+          <span class="tag">Hazır Yapılar</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="footer">
+      <p>
+        H. Çağlayan Ceylan tarafından geliştirildi | 
+        <a href="https://github.com/hcceylan/fdtd" target="_blank">GitHub</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
