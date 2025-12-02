@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>3D FDTD Simülasyonu</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #0b0f14;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: #e6edf3;
+      overflow: hidden;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      height: 100vh;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      background: rgba(22,27,34,0.95);
+      border-right: 1px solid #30363d;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 650;
+      color: #e6edf3;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #8b949e;
+      margin-bottom: 12px;
+    }
+    
+    .panel {
+      background: rgba(13,17,23,0.6);
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .panel h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    
+    /* Materials */
+    .material-grid {
+      display: grid;
+      gap: 6px;
+    }
+    .material-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      background: rgba(13,17,23,0.6);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+    }
+    .material-btn:hover {
+      background: rgba(13,17,23,0.9);
+      border-color: rgba(88,166,255,0.3);
+    }
+    .material-btn.active {
+      background: rgba(88,166,255,0.15);
+      border-color: #58a6ff;
+    }
+    .material-swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.2);
+      flex-shrink: 0;
+    }
+    .material-info {
+      flex: 1;
+      line-height: 1.3;
+    }
+    .material-name {
+      font-weight: 600;
+      color: #e6edf3;
+      font-size: 12px;
+    }
+    .material-props {
+      font-size: 10px;
+      color: #8b949e;
+    }
+    
+    /* Shapes */
+    .shape-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .shape-btn {
+      padding: 10px;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      background: rgba(13,17,23,0.6);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 11px;
+      text-align: center;
+      color: #e6edf3;
+    }
+    .shape-btn:hover {
+      background: rgba(13,17,23,0.9);
+      border-color: rgba(88,166,255,0.3);
+    }
+    .shape-btn.active {
+      background: rgba(88,166,255,0.15);
+      border-color: #58a6ff;
+    }
+    .shape-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    
+    /* Controls */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    label {
+      font-size: 11px;
+      color: #8b949e;
+      display: block;
+      margin-bottom: 4px;
+    }
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #21262d;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #58a6ff;
+      cursor: pointer;
+    }
+    .range-value {
+      color: #e6edf3;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .btn {
+      padding: 10px 14px;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      background: rgba(35,134,54,0.2);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+      font-weight: 600;
+      color: #7ee787;
+      text-align: center;
+    }
+    .btn:hover {
+      background: rgba(35,134,54,0.3);
+      border-color: #7ee787;
+    }
+    .btn.secondary {
+      background: rgba(88,166,255,0.15);
+      color: #58a6ff;
+    }
+    .btn.secondary:hover {
+      background: rgba(88,166,255,0.25);
+      border-color: #58a6ff;
+    }
+    .btn.danger {
+      background: rgba(218,54,51,0.2);
+      color: #ff7b72;
+    }
+    .btn.danger:hover {
+      background: rgba(218,54,51,0.3);
+      border-color: #ff7b72;
+    }
+    
+    /* Presets */
+    .preset-grid {
+      display: grid;
+      gap: 6px;
+    }
+    .preset-btn {
+      padding: 8px 10px;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      background: rgba(13,17,23,0.6);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 11px;
+      text-align: left;
+      color: #e6edf3;
+      line-height: 1.4;
+    }
+    .preset-btn:hover {
+      background: rgba(88,166,255,0.1);
+      border-color: #58a6ff;
+    }
+    
+    /* Canvas Area */
+    .canvas-area {
+      position: relative;
+      background: #000;
+    }
+    #canvas3d {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(48,54,61,0.8);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #8b949e;
+      line-height: 1.6;
+    }
+    .overlay strong {
+      color: #58a6ff;
+    }
+    .info-overlay {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+    }
+    .info-card {
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(48,54,61,0.8);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .info-label {
+      font-size: 10px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e6edf3;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div>
+        <h1>3D FDTD Simülasyonu</h1>
+        <div class="subtitle">3 boyutlu elektromanyetik dalga yayılımı</div>
+      </div>
+
+      <!-- Material Selector -->
+      <div class="panel">
+        <h3>Malzeme Seçimi</h3>
+        <div class="material-grid" id="materialSelector"></div>
+      </div>
+
+      <!-- Shape Tools -->
+      <div class="panel">
+        <h3>Şekil Araçları</h3>
+        <div class="shape-grid" id="shapeSelector"></div>
+      </div>
+
+      <!-- Size Control -->
+      <div class="panel">
+        <h3>Nesne Boyutu</h3>
+        <div class="control-group">
+          <label>Boyut: <span class="range-value" id="sizeValue">5</span> birim</label>
+          <input type="range" id="objectSize" min="2" max="15" value="5">
+        </div>
+      </div>
+
+      <!-- Preset Geometries -->
+      <div class="panel">
+        <h3>Hazır Yapılar</h3>
+        <div class="preset-grid" id="presetSelector"></div>
+      </div>
+
+      <!-- Simulation Controls -->
+      <div class="panel">
+        <h3>Simülasyon</h3>
+        <div class="control-group">
+          <button class="btn" id="toggleSim">⏸ Durdur</button>
+          <button class="btn secondary" id="resetSim">🔄 Sıfırla</button>
+          <button class="btn danger" id="clearAll">🗑 Temizle</button>
+        </div>
+      </div>
+
+      <!-- View Controls -->
+      <div class="panel">
+        <h3>Görünüm</h3>
+        <div class="control-group">
+          <button class="btn secondary" id="resetCamera">📷 Kamerayı Sıfırla</button>
+          <label>
+            <input type="checkbox" id="showGrid" checked> Izgara Göster
+          </label>
+          <label>
+            <input type="checkbox" id="showAxes" checked> Eksen Göster
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Canvas Area -->
+    <div class="canvas-area">
+      <canvas id="canvas3d"></canvas>
+      
+      <div class="overlay">
+        <strong>Sol Tık + Sürükle:</strong> Kamerayı döndür<br>
+        <strong>Tekerlek:</strong> Yakınlaş/Uzaklaş<br>
+        <strong>Sağ Tık:</strong> Nesne yerleştir
+      </div>
+
+      <div class="info-overlay">
+        <div class="info-card">
+          <div class="info-label">Zaman Adımı</div>
+          <div class="info-value" id="timeStep">0</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Simülasyon</div>
+          <div class="info-value" id="simStatus">▶ Çalışıyor</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Nesneler</div>
+          <div class="info-value" id="objectCount">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // Materials Library
+    const MATERIALS = [
+      { 
+        id: 'air', 
+        name: 'Hava', 
+        color: 0x0099ff,
+        wireColor: 0x00ccff,
+        eps_r: 1.0, 
+        sigma: 0.0,
+        props: 'εr=1'
+      },
+      { 
+        id: 'dielectric', 
+        name: 'Dielektrik', 
+        color: 0x00ff88,
+        wireColor: 0x00ffaa,
+        eps_r: 4.0, 
+        sigma: 0.0,
+        props: 'εr=4'
+      },
+      { 
+        id: 'dielectric57', 
+        name: 'Dielektrik', 
+        color: 0x8a2be2,
+        wireColor: 0xa855f7,
+        eps_r: 5.7, 
+        sigma: 0.0,
+        props: 'εr=5.7'
+      },
+      { 
+        id: 'metal', 
+        name: 'Metal', 
+        color: 0xffd700,
+        wireColor: 0xffed4e,
+        eps_r: 1.0, 
+        sigma: 1e7,
+        props: 'σ=10⁷'
+      },
+      { 
+        id: 'lossy', 
+        name: 'Kayıplı', 
+        color: 0xff6347,
+        wireColor: 0xff8c7a,
+        eps_r: 2.5, 
+        sigma: 0.1,
+        props: 'εr=2.5, σ=0.1'
+      }
+    ];
+
+    // Shape Types
+    const SHAPES = [
+      { id: 'box', name: 'Küp', icon: '⬛' },
+      { id: 'sphere', name: 'Küre', icon: '⚫' },
+      { id: 'cylinder', name: 'Silindir', icon: '⬤' },
+      { id: 'cone', name: 'Koni', icon: '🔺' }
+    ];
+
+    // Presets
+    const PRESETS = [
+      {
+        name: '3 Katmanlı Duvar',
+        objects: [
+          { shape: 'box', material: 1, position: [0, 0, -10], size: [20, 20, 2] },
+          { shape: 'box', material: 2, position: [0, 0, 0], size: [20, 20, 2] },
+          { shape: 'box', material: 1, position: [0, 0, 10], size: [20, 20, 2] }
+        ]
+      },
+      {
+        name: 'Rezonatör Boşluğu',
+        objects: [
+          { shape: 'box', material: 3, position: [-15, 0, 0], size: [2, 30, 30] },
+          { shape: 'box', material: 3, position: [15, 0, 0], size: [2, 30, 30] },
+          { shape: 'box', material: 3, position: [0, -15, 0], size: [30, 2, 30] },
+          { shape: 'box', material: 3, position: [0, 15, 0], size: [30, 2, 30] }
+        ]
+      },
+      {
+        name: 'Dielektrik Küreler',
+        objects: [
+          { shape: 'sphere', material: 1, position: [-10, 0, 0], size: [5] },
+          { shape: 'sphere', material: 2, position: [0, 0, 0], size: [5] },
+          { shape: 'sphere', material: 1, position: [10, 0, 0], size: [5] }
+        ]
+      },
+      {
+        name: 'Dalga Kılavuzu',
+        objects: [
+          { shape: 'cylinder', material: 3, position: [0, 10, 0], size: [15, 2, 16], rotation: [Math.PI/2, 0, 0] },
+          { shape: 'cylinder', material: 3, position: [0, -10, 0], size: [15, 2, 16], rotation: [Math.PI/2, 0, 0] },
+          { shape: 'cylinder', material: 3, position: [10, 0, 0], size: [15, 2, 16], rotation: [0, 0, Math.PI/2] },
+          { shape: 'cylinder', material: 3, position: [-10, 0, 0], size: [15, 2, 16], rotation: [0, 0, Math.PI/2] }
+        ]
+      }
+    ];
+
+    // Scene Setup
+    const canvas = document.getElementById('canvas3d');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    scene.fog = new THREE.Fog(0x000000, 50, 200);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(40, 40, 40);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(10, 20, 10);
+    scene.add(directionalLight);
+
+    const pointLight = new THREE.PointLight(0x58a6ff, 0.5);
+    pointLight.position.set(-10, -10, -10);
+    scene.add(pointLight);
+
+    // Grid and Axes
+    const gridHelper = new THREE.GridHelper(60, 30, 0x444444, 0x222222);
+    scene.add(gridHelper);
+
+    const axesHelper = new THREE.AxesHelper(25);
+    scene.add(axesHelper);
+
+    // Simplified Wave Simulation
+    const NX = 64, NY = 64, NZ = 64;
+    const GRID_SIZE = 32;
+    const waves = [];
+    
+    class Wave {
+      constructor() {
+        this.position = new THREE.Vector3(0, 0, -10);
+        this.radius = 0;
+        this.maxRadius = 40;
+        this.speed = 0.3;
+        this.opacity = 1.0;
+        
+        // Create visual sphere
+        const geometry = new THREE.SphereGeometry(1, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+          color: 0x00ffff,
+          transparent: true,
+          opacity: 0.3,
+          wireframe: true,
+          side: THREE.DoubleSide
+        });
+        this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.position.copy(this.position);
+        scene.add(this.mesh);
+        
+        // Create inner glow
+        const glowGeometry = new THREE.SphereGeometry(1, 16, 16);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+          color: 0x00ffff,
+          transparent: true,
+          opacity: 0.1,
+          side: THREE.BackSide
+        });
+        this.glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        this.mesh.add(this.glow);
+      }
+      
+      update() {
+        this.radius += this.speed;
+        this.opacity = Math.max(0, 1 - this.radius / this.maxRadius);
+        
+        this.mesh.scale.set(this.radius, this.radius, this.radius);
+        this.mesh.material.opacity = this.opacity * 0.3;
+        this.glow.material.opacity = this.opacity * 0.2;
+        
+        return this.radius < this.maxRadius;
+      }
+      
+      checkCollision(objects) {
+        objects.forEach(obj => {
+          const distance = this.position.distanceTo(obj.mesh.position);
+          if (Math.abs(distance - this.radius) < 2) {
+            // Collision effect
+            const scale = 1 + Math.random() * 0.2;
+            obj.mesh.scale.set(scale, scale, scale);
+            setTimeout(() => {
+              obj.mesh.scale.set(1, 1, 1);
+            }, 100);
+          }
+        });
+      }
+      
+      destroy() {
+        scene.remove(this.mesh);
+      }
+    }
+
+    // Source visualization
+    const sourceGeometry = new THREE.SphereGeometry(1, 16, 16);
+    const sourceMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0xff00ff, 
+      emissive: 0xff00ff,
+      emissiveIntensity: 1
+    });
+    const source = new THREE.Mesh(sourceGeometry, sourceMaterial);
+    source.position.set(0, 0, -10);
+    scene.add(source);
+    
+    // Particle system for field visualization
+    const particleCount = 5000;
+    const particleGeometry = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleColors = new Float32Array(particleCount * 3);
+    
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (Math.random() - 0.5) * GRID_SIZE;
+      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * GRID_SIZE;
+      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * GRID_SIZE;
+    }
+    
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    particleGeometry.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+    
+    const particleMaterial = new THREE.PointsMaterial({
+      size: 0.5,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending
+    });
+    
+    const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+    scene.add(particleSystem);
+
+    // Update particles based on waves
+    function updateParticles() {
+      const positions = particleGeometry.attributes.position.array;
+      const colors = particleGeometry.attributes.color.array;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const px = positions[i * 3];
+        const py = positions[i * 3 + 1];
+        const pz = positions[i * 3 + 2];
+        const particlePos = new THREE.Vector3(px, py, pz);
+        
+        let intensity = 0;
+        waves.forEach(wave => {
+          const distance = particlePos.distanceTo(wave.position);
+          const waveDist = Math.abs(distance - wave.radius);
+          if (waveDist < 3) {
+            intensity = Math.max(intensity, (1 - waveDist / 3) * wave.opacity);
+          }
+        });
+        
+        if (intensity > 0.1) {
+          colors[i * 3] = 0;
+          colors[i * 3 + 1] = intensity;
+          colors[i * 3 + 2] = 1;
+        } else {
+          colors[i * 3] = 0;
+          colors[i * 3 + 1] = 0;
+          colors[i * 3 + 2] = 0;
+        }
+      }
+      
+      particleGeometry.attributes.color.needsUpdate = true;
+    }
+
+    // Object Storage
+    const sceneObjects = [];
+    let selectedMaterial = 0;
+    let selectedShape = 0;
+    let objectSize = 5;
+    let running = true;
+    let timeStep = 0;
+
+    // Create Geometry
+    function createGeometry(shapeId, size) {
+      switch(shapeId) {
+        case 'box':
+          return new THREE.BoxGeometry(size, size, size);
+        case 'sphere':
+          return new THREE.SphereGeometry(size / 2, 32, 32);
+        case 'cylinder':
+          return new THREE.CylinderGeometry(size / 2, size / 2, size, 32);
+        case 'cone':
+          return new THREE.ConeGeometry(size / 2, size, 32);
+        default:
+          return new THREE.BoxGeometry(size, size, size);
+      }
+    }
+
+    // Add Object to Scene
+    function addObject(shapeId, materialId, position, size, rotation = [0, 0, 0]) {
+      const geometry = createGeometry(shapeId, size || objectSize);
+      const mat = MATERIALS[materialId];
+      
+      const material = new THREE.MeshStandardMaterial({
+        color: mat.color,
+        transparent: true,
+        opacity: 0.7,
+        metalness: materialId === 3 ? 0.9 : 0.1,
+        roughness: materialId === 3 ? 0.2 : 0.8
+      });
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(...position);
+      mesh.rotation.set(...rotation);
+      
+      // Wireframe outline
+      const edges = new THREE.EdgesGeometry(geometry);
+      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: mat.wireColor }));
+      mesh.add(line);
+      
+      scene.add(mesh);
+      sceneObjects.push({ mesh, shapeId, materialId });
+      updateObjectCount();
+    }
+
+    // Raycaster for placing objects
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      
+      // Place at a fixed distance from camera
+      const distance = 30;
+      const position = new THREE.Vector3();
+      raycaster.ray.at(distance, position);
+      
+      addObject(SHAPES[selectedShape].id, selectedMaterial, [position.x, position.y, position.z]);
+    });
+
+    // Update Functions
+    function updateSimulation() {
+      if (!running) return;
+      
+      // Create new wave periodically
+      if (timeStep % 30 === 0) {
+        waves.push(new Wave());
+      }
+      
+      // Update existing waves
+      for (let i = waves.length - 1; i >= 0; i--) {
+        if (!waves[i].update()) {
+          waves[i].destroy();
+          waves.splice(i, 1);
+        } else {
+          waves[i].checkCollision(sceneObjects);
+        }
+      }
+      
+      // Update particles
+      updateParticles();
+      
+      // Pulse source
+      const pulse = 1 + 0.3 * Math.sin(timeStep * 0.15);
+      source.scale.set(pulse, pulse, pulse);
+      
+      timeStep++;
+      document.getElementById('timeStep').textContent = timeStep;
+    }
+
+    function updateObjectCount() {
+      document.getElementById('objectCount').textContent = sceneObjects.length;
+    }
+
+    // Animation Loop
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      updateSimulation();
+      
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    // UI Setup
+    function setupMaterialSelector() {
+      const container = document.getElementById('materialSelector');
+      MATERIALS.forEach((mat, idx) => {
+        const btn = document.createElement('div');
+        btn.className = 'material-btn' + (idx === 0 ? ' active' : '');
+        btn.innerHTML = `
+          <div class="material-swatch" style="background: #${mat.color.toString(16).padStart(6, '0')}"></div>
+          <div class="material-info">
+            <div class="material-name">${mat.name}</div>
+            <div class="material-props">${mat.props}</div>
+          </div>
+        `;
+        btn.addEventListener('click', () => {
+          selectedMaterial = idx;
+          document.querySelectorAll('.material-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function setupShapeSelector() {
+      const container = document.getElementById('shapeSelector');
+      SHAPES.forEach((shape, idx) => {
+        const btn = document.createElement('div');
+        btn.className = 'shape-btn' + (idx === 0 ? ' active' : '');
+        btn.innerHTML = `
+          <div class="shape-icon">${shape.icon}</div>
+          <div>${shape.name}</div>
+        `;
+        btn.addEventListener('click', () => {
+          selectedShape = idx;
+          document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function setupPresets() {
+      const container = document.getElementById('presetSelector');
+      PRESETS.forEach((preset) => {
+        const btn = document.createElement('button');
+        btn.className = 'preset-btn';
+        btn.textContent = preset.name;
+        btn.addEventListener('click', () => {
+          // Clear existing objects
+          sceneObjects.forEach(obj => scene.remove(obj.mesh));
+          sceneObjects.length = 0;
+          
+          // Add preset objects
+          preset.objects.forEach(obj => {
+            addObject(obj.shape, obj.material, obj.position, obj.size[0], obj.rotation || [0, 0, 0]);
+          });
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    // Controls
+    document.getElementById('objectSize').addEventListener('input', (e) => {
+      objectSize = parseInt(e.target.value);
+      document.getElementById('sizeValue').textContent = objectSize;
+    });
+
+    document.getElementById('toggleSim').addEventListener('click', (e) => {
+      running = !running;
+      e.target.textContent = running ? '⏸ Durdur' : '▶ Başlat';
+      document.getElementById('simStatus').textContent = running ? '▶ Çalışıyor' : '⏸ Duraklatıldı';
+    });
+
+    document.getElementById('resetSim').addEventListener('click', () => {
+      timeStep = 0;
+      waves.forEach(w => w.destroy());
+      waves.length = 0;
+    });
+
+    document.getElementById('clearAll').addEventListener('click', () => {
+      if (confirm('Tüm nesneleri silmek istediğinizden emin misiniz?')) {
+        sceneObjects.forEach(obj => scene.remove(obj.mesh));
+        sceneObjects.length = 0;
+        updateObjectCount();
+      }
+    });
+
+    document.getElementById('resetCamera').addEventListener('click', () => {
+      camera.position.set(40, 40, 40);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    });
+
+    document.getElementById('showGrid').addEventListener('change', (e) => {
+      gridHelper.visible = e.target.checked;
+    });
+
+    document.getElementById('showAxes').addEventListener('change', (e) => {
+      axesHelper.visible = e.target.checked;
+    });
+
+    // Window Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Initialize
+    setupMaterialSelector();
+    setupShapeSelector();
+    setupPresets();
+    animate();
+  </script>
+</body>
+</html>

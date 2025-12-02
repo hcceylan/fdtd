@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>İnteraktif FDTD Geometri Düzenleyicisi</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background: #0b0f14;
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: #e6edf3;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+    h1 {
+      margin: 0 0 10px 0;
+      color: #e6edf3;
+      font-weight: 650;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #8aa0b2;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .main-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+    }
+    
+    /* Sidebar Controls */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .panel {
+      background: rgba(22,27,34,0.8);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .panel h3 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Material Selector */
+    .material-grid {
+      display: grid;
+      gap: 8px;
+    }
+    .material-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      background: rgba(13,17,23,0.6);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+    .material-btn:hover {
+      background: rgba(13,17,23,0.9);
+      border-color: rgba(88,166,255,0.3);
+    }
+    .material-btn.active {
+      background: rgba(88,166,255,0.15);
+      border-color: #58a6ff;
+    }
+    .material-swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.2);
+      flex-shrink: 0;
+    }
+    .material-info {
+      flex: 1;
+      line-height: 1.3;
+    }
+    .material-name {
+      font-weight: 600;
+      color: #e6edf3;
+    }
+    .material-props {
+      font-size: 11px;
+      color: #8b949e;
+    }
+    
+    /* Preset Geometries */
+    .preset-grid {
+      display: grid;
+      gap: 8px;
+    }
+    .preset-btn {
+      padding: 10px 12px;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      background: rgba(13,17,23,0.6);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+      text-align: left;
+      color: #e6edf3;
+    }
+    .preset-btn:hover {
+      background: rgba(88,166,255,0.1);
+      border-color: #58a6ff;
+    }
+    
+    /* Controls */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .control-row {
+      display: flex;
+      gap: 8px;
+    }
+    .btn {
+      padding: 10px 16px;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      background: rgba(35,134,54,0.2);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+      font-weight: 600;
+      color: #7ee787;
+      flex: 1;
+    }
+    .btn:hover {
+      background: rgba(35,134,54,0.3);
+      border-color: #7ee787;
+    }
+    .btn.danger {
+      background: rgba(218,54,51,0.2);
+      color: #ff7b72;
+    }
+    .btn.danger:hover {
+      background: rgba(218,54,51,0.3);
+      border-color: #ff7b72;
+    }
+    .btn.secondary {
+      background: rgba(88,166,255,0.15);
+      color: #58a6ff;
+    }
+    .btn.secondary:hover {
+      background: rgba(88,166,255,0.25);
+      border-color: #58a6ff;
+    }
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    label {
+      font-size: 12px;
+      color: #8b949e;
+      display: block;
+      margin-bottom: 4px;
+    }
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #21262d;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #58a6ff;
+      cursor: pointer;
+    }
+    .range-value {
+      color: #e6edf3;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    
+    /* Canvas Area */
+    .canvas-area {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .canvas-wrapper {
+      position: relative;
+      background: #000;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+    #simulationCanvas {
+      display: block;
+      width: 100%;
+      cursor: crosshair;
+    }
+    .canvas-overlay {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(48,54,61,0.8);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #8b949e;
+    }
+    .canvas-overlay strong {
+      color: #58a6ff;
+    }
+    
+    .info-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .info-card {
+      background: rgba(22,27,34,0.6);
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+    }
+    .info-label {
+      color: #8b949e;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-value {
+      color: #e6edf3;
+      font-weight: 600;
+      font-size: 16px;
+      margin-top: 4px;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div>
+      <h1>İnteraktif FDTD Geometri Düzenleyicisi</h1>
+      <div class="subtitle">
+        Fareyle tıklayıp sürükleyerek malzeme ekleyin. Farklı geometriler deneyin ve elektromanyetik dalga yayılımını gerçek zamanlı izleyin.
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <!-- Material Selector -->
+        <div class="panel">
+          <h3>Malzeme Seçimi</h3>
+          <div class="material-grid" id="materialSelector"></div>
+        </div>
+
+        <!-- Brush Size -->
+        <div class="panel">
+          <h3>Fırça Boyutu</h3>
+          <div class="control-group">
+            <label>Boyut: <span class="range-value" id="brushValue">10</span> hücre</label>
+            <input type="range" id="brushSize" min="1" max="50" value="10">
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="eraserMode">
+            <label style="margin: 0">Silgi Modu</label>
+          </div>
+        </div>
+
+        <!-- Preset Geometries -->
+        <div class="panel">
+          <h3>Hazır Geometriler</h3>
+          <div class="preset-grid" id="presetSelector"></div>
+        </div>
+
+        <!-- Simulation Controls -->
+        <div class="panel">
+          <h3>Simülasyon Kontrolü</h3>
+          <div class="control-group">
+            <button class="btn" id="toggleSim">⏸ Durdur</button>
+            <div class="control-row">
+              <button class="btn secondary" id="resetSim">🔄 Sıfırla</button>
+              <button class="btn danger" id="clearGeo">🗑 Temizle</button>
+            </div>
+            <button class="btn secondary" id="saveGeo">💾 Geometri Kaydet</button>
+            <button class="btn secondary" id="loadGeo">📂 Geometri Yükle</button>
+          </div>
+        </div>
+
+        <!-- Wave Source -->
+        <div class="panel">
+          <h3>Dalga Kaynağı</h3>
+          <div class="control-group">
+            <label>Kaynak Pozisyonu: <span class="range-value" id="sourceValue">180</span></label>
+            <input type="range" id="sourcePos" min="50" max="462" value="180">
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Canvas Area -->
+      <div class="canvas-area">
+        <div class="canvas-wrapper">
+          <canvas id="simulationCanvas" width="1000" height="600"></canvas>
+          <div class="canvas-overlay">
+            <strong>Sol Tık:</strong> Malzeme Ekle | <strong>Sağ Tık:</strong> Sil
+          </div>
+        </div>
+
+        <div class="info-bar">
+          <div class="info-card">
+            <div class="info-label">Zaman Adımı</div>
+            <div class="info-value" id="timeStep">0</div>
+          </div>
+          <div class="info-card">
+            <div class="info-label">Simülasyon Durumu</div>
+            <div class="info-value" id="simStatus">▶ Çalışıyor</div>
+          </div>
+          <div class="info-card">
+            <div class="info-label">Aktif Malzeme</div>
+            <div class="info-value" id="activeMaterial">Hava</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Material Library
+    const MATERIALS = [
+      { 
+        id: 'air', 
+        name: 'Hava', 
+        color: 'rgba(0,160,255,0.15)', 
+        stroke: 'rgba(0,160,255,0.6)',
+        fieldColor: '#00a0ff',
+        eps_r: 1.0, 
+        sigma: 0.0,
+        props: 'εr=1, σ=0'
+      },
+      { 
+        id: 'dielectric4', 
+        name: 'Dielektrik', 
+        color: 'rgba(0,255,140,0.2)', 
+        stroke: 'rgba(0,255,140,0.7)',
+        fieldColor: '#00ff8c',
+        eps_r: 4.0, 
+        sigma: 0.0,
+        props: 'εr=4, σ=0'
+      },
+      { 
+        id: 'dielectric57', 
+        name: 'Dielektrik', 
+        color: 'rgba(138,43,226,0.2)', 
+        stroke: 'rgba(138,43,226,0.7)',
+        fieldColor: '#8a2be2',
+        eps_r: 5.7, 
+        sigma: 0.0,
+        props: 'εr=5.7, σ=0'
+      },
+      { 
+        id: 'metal', 
+        name: 'Metal', 
+        color: 'rgba(255,215,0,0.25)', 
+        stroke: 'rgba(255,215,0,0.8)',
+        fieldColor: '#ffd700',
+        eps_r: 1.0, 
+        sigma: 1e7,
+        props: 'σ=10⁷ S/m'
+      },
+      { 
+        id: 'lossy', 
+        name: 'Kayıplı', 
+        color: 'rgba(255,99,71,0.2)', 
+        stroke: 'rgba(255,99,71,0.7)',
+        fieldColor: '#ff6347',
+        eps_r: 2.5, 
+        sigma: 0.1,
+        props: 'εr=2.5, σ=0.1'
+      }
+    ];
+
+    // Preset Geometries from the document
+    const PRESETS = [
+      { 
+        name: 'Geometri-1: Basit Dielektrik',
+        desc: 'Tek dielektrik slab',
+        apply: (geo) => {
+          geo.fill(0); // Clear
+          for (let i = 250; i <= 309; i++) geo[i] = 1; // dielectric4
+        }
+      },
+      { 
+        name: 'Geometri-2: Çift Malzeme',
+        desc: 'İki farklı dielektrik',
+        apply: (geo) => {
+          geo.fill(0);
+          for (let i = 250; i <= 309; i++) geo[i] = 1; // dielectric4
+          for (let i = 310; i <= 340; i++) geo[i] = 2; // dielectric57
+        }
+      },
+      { 
+        name: 'Geometri-3: Üçlü Katman',
+        desc: 'Üç malzeme katmanı',
+        apply: (geo) => {
+          geo.fill(0);
+          for (let i = 250; i <= 309; i++) geo[i] = 1;
+          for (let i = 310; i <= 340; i++) geo[i] = 2;
+          for (let i = 340; i <= 380; i++) geo[i] = 1;
+        }
+      },
+      { 
+        name: 'Geometri-4: Dörtlü Yapı',
+        desc: 'Dört farklı bölge',
+        apply: (geo) => {
+          geo.fill(0);
+          for (let i = 250; i <= 309; i++) geo[i] = 1;
+          for (let i = 340; i <= 370; i++) geo[i] = 1;
+          for (let i = 460; i <= 500; i++) geo[i] = 2;
+        }
+      },
+      { 
+        name: 'Geometri-5: İletken Dahil',
+        desc: 'Metal slab ile',
+        apply: (geo) => {
+          geo.fill(0);
+          for (let i = 250; i <= 350; i++) geo[i] = 1;
+          for (let i = 380; i <= 410; i++) geo[i] = 3; // metal
+        }
+      },
+      { 
+        name: 'Boş Uzay',
+        desc: 'Sadece hava',
+        apply: (geo) => {
+          geo.fill(0);
+        }
+      }
+    ];
+
+    // Simulation Setup
+    const canvas = document.getElementById("simulationCanvas");
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width;
+    const H = canvas.height;
+    const NCELLS = 513;
+    const scaleX = W / NCELLS;
+
+    // Physical constants
+    const eps0 = 8.854e-12;
+    const c = 3e8;
+    const delta_x = 1.5e-3;
+    const delta_t = 2.5e-12;
+    const mu = 4 * Math.PI * 1e-7;
+    const delta = delta_t / delta_x;
+    const beta = -Math.log(0.001) / 1600.0;
+
+    // Simulation state
+    let geometry = new Array(NCELLS).fill(0); // Material ID for each cell
+    let eps = new Array(NCELLS);
+    let sig = new Array(NCELLS);
+    let e = [new Array(NCELLS).fill(0), new Array(NCELLS).fill(0)];
+    let h = [new Array(NCELLS).fill(0), new Array(NCELLS).fill(0)];
+    let running = true;
+    let timeStep = 0;
+    let selectedMaterial = 0;
+    let brushSize = 10;
+    let eraserMode = false;
+    let sourcePosition = 180;
+
+    // UI State
+    let isDrawing = false;
+
+    // Initialize
+    function initSimulation() {
+      updateMaterialArrays();
+      resetFields();
+      timeStep = 0;
+    }
+
+    function updateMaterialArrays() {
+      for (let i = 0; i < NCELLS; i++) {
+        const mat = MATERIALS[geometry[i]];
+        eps[i] = mat.eps_r * eps0;
+        sig[i] = mat.sigma;
+      }
+    }
+
+    function resetFields() {
+      for (let i = 0; i < NCELLS; i++) {
+        e[0][i] = Math.exp(-beta * Math.pow(i - sourcePosition, 2));
+        e[1][i] = 0;
+        h[0][i] = Math.exp(-beta * Math.pow(i - sourcePosition + 0.25, 2)) / 376.7;
+        h[1][i] = 0;
+      }
+      timeStep = 0;
+    }
+
+    // Draw Functions
+    function drawGeometry() {
+      ctx.save();
+      
+      // Draw material regions
+      let currentMat = geometry[0];
+      let startIdx = 0;
+      
+      for (let i = 1; i <= NCELLS; i++) {
+        if (i === NCELLS || geometry[i] !== currentMat) {
+          const mat = MATERIALS[currentMat];
+          const x0 = Math.floor(startIdx * scaleX);
+          const x1 = Math.ceil(i * scaleX);
+          
+          ctx.fillStyle = mat.color;
+          ctx.fillRect(x0, 0, x1 - x0, H);
+          
+          ctx.strokeStyle = mat.stroke;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x0, 0);
+          ctx.lineTo(x0, H);
+          ctx.stroke();
+          
+          if (i < NCELLS) {
+            startIdx = i;
+            currentMat = geometry[i];
+          }
+        }
+      }
+      
+      ctx.restore();
+    }
+
+    const yAxis = H / 2;
+
+    function drawReferenceLines() {
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,0,0.4)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(0, yAxis);
+      ctx.lineTo(W, yAxis);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      
+      // Draw source position indicator
+      const srcX = Math.floor(sourcePosition * scaleX);
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,100,255,0.8)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(srcX, 0);
+      ctx.lineTo(srcX, H);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,100,255,0.9)";
+      ctx.font = "12px sans-serif";
+      ctx.fillText("SOURCE", srcX + 5, 20);
+      ctx.restore();
+    }
+
+    function updateFields() {
+      // Update E field
+      for (let i = 1; i < NCELLS - 1; i++) {
+        const L = eps[i];
+        const M = eps[i] + delta_t * sig[i];
+        e[1][i] = (L * e[0][i]) / M - (delta * (h[0][i] - h[0][i - 1])) / M;
+      }
+      
+      // Boundary conditions
+      e[1][0] = e[0][NCELLS - 2];
+      e[1][NCELLS - 1] = e[0][NCELLS - 2];
+      
+      // Update H field
+      for (let i = 1; i < NCELLS - 1; i++) {
+        h[1][i] = h[0][i] - (delta * (e[1][i + 1] - e[1][i])) / mu;
+      }
+      h[1][0] = h[0][0] - (delta * (e[1][1] - e[1][0])) / mu;
+      
+      // Swap buffers
+      [e[0], e[1]] = [e[1], e[0]];
+      [h[0], h[1]] = [h[1], h[0]];
+      
+      timeStep++;
+    }
+
+    function drawFields() {
+      ctx.save();
+      const amplitude = 180;
+      
+      for (let i = 0; i < NCELLS; i++) {
+        const y = yAxis - amplitude * e[0][i];
+        const mat = MATERIALS[geometry[i]];
+        ctx.fillStyle = mat.fieldColor;
+        const x = Math.floor(i * scaleX);
+        ctx.fillRect(x, Math.max(0, Math.min(H - 2, y)), Math.max(1, Math.ceil(scaleX)), 2);
+      }
+      
+      ctx.restore();
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, W, H);
+      drawGeometry();
+      drawReferenceLines();
+      drawFields();
+      
+      document.getElementById('timeStep').textContent = timeStep;
+    }
+
+    function animate() {
+      if (running) {
+        updateFields();
+      }
+      render();
+      requestAnimationFrame(animate);
+    }
+
+    // User Interaction - Drawing
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (W / rect.width);
+      const y = (e.clientY - rect.top) * (H / rect.height);
+      return { x, y };
+    }
+
+    function getCellIndex(x) {
+      return Math.floor(x / scaleX);
+    }
+
+    function paintCell(cellIdx) {
+      if (cellIdx < 0 || cellIdx >= NCELLS) return;
+      
+      const halfBrush = Math.floor(brushSize / 2);
+      for (let i = Math.max(0, cellIdx - halfBrush); i <= Math.min(NCELLS - 1, cellIdx + halfBrush); i++) {
+        geometry[i] = eraserMode ? 0 : selectedMaterial;
+      }
+      
+      updateMaterialArrays();
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      isDrawing = true;
+      const coords = getCanvasCoords(e);
+      const cellIdx = getCellIndex(coords.x);
+      
+      if (e.button === 2) { // Right click = erase
+        const wasEraser = eraserMode;
+        eraserMode = true;
+        paintCell(cellIdx);
+        eraserMode = wasEraser;
+      } else {
+        paintCell(cellIdx);
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDrawing) return;
+      const coords = getCanvasCoords(e);
+      const cellIdx = getCellIndex(coords.x);
+      paintCell(cellIdx);
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      isDrawing = false;
+    });
+
+    canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
+
+    // UI Setup
+    function setupMaterialSelector() {
+      const container = document.getElementById('materialSelector');
+      MATERIALS.forEach((mat, idx) => {
+        const btn = document.createElement('div');
+        btn.className = 'material-btn' + (idx === 0 ? ' active' : '');
+        btn.innerHTML = `
+          <div class="material-swatch" style="background: ${mat.color}; border-color: ${mat.stroke}"></div>
+          <div class="material-info">
+            <div class="material-name">${mat.name}</div>
+            <div class="material-props">${mat.props}</div>
+          </div>
+        `;
+        btn.addEventListener('click', () => {
+          selectedMaterial = idx;
+          document.querySelectorAll('.material-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('activeMaterial').textContent = mat.name;
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function setupPresets() {
+      const container = document.getElementById('presetSelector');
+      PRESETS.forEach((preset) => {
+        const btn = document.createElement('button');
+        btn.className = 'preset-btn';
+        btn.innerHTML = `<strong>${preset.name}</strong><br><small>${preset.desc}</small>`;
+        btn.addEventListener('click', () => {
+          preset.apply(geometry);
+          updateMaterialArrays();
+          resetFields();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    // Controls
+    document.getElementById('brushSize').addEventListener('input', (e) => {
+      brushSize = parseInt(e.target.value);
+      document.getElementById('brushValue').textContent = brushSize;
+    });
+
+    document.getElementById('eraserMode').addEventListener('change', (e) => {
+      eraserMode = e.target.checked;
+    });
+
+    document.getElementById('sourcePos').addEventListener('input', (e) => {
+      sourcePosition = parseInt(e.target.value);
+      document.getElementById('sourceValue').textContent = sourcePosition;
+      resetFields();
+    });
+
+    document.getElementById('toggleSim').addEventListener('click', (e) => {
+      running = !running;
+      e.target.textContent = running ? '⏸ Durdur' : '▶ Başlat';
+      document.getElementById('simStatus').textContent = running ? '▶ Çalışıyor' : '⏸ Duraklatıldı';
+    });
+
+    document.getElementById('resetSim').addEventListener('click', () => {
+      resetFields();
+    });
+
+    document.getElementById('clearGeo').addEventListener('click', () => {
+      if (confirm('Tüm geometriyi temizlemek istediğinizden emin misiniz?')) {
+        geometry.fill(0);
+        updateMaterialArrays();
+        resetFields();
+      }
+    });
+
+    document.getElementById('saveGeo').addEventListener('click', () => {
+      const data = JSON.stringify({
+        geometry: Array.from(geometry),
+        sourcePosition,
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem('fdtd_geometry', data);
+      alert('Geometri kaydedildi!');
+    });
+
+    document.getElementById('loadGeo').addEventListener('click', () => {
+      const data = localStorage.getItem('fdtd_geometry');
+      if (data) {
+        const obj = JSON.parse(data);
+        geometry = obj.geometry;
+        sourcePosition = obj.sourcePosition || 180;
+        document.getElementById('sourcePos').value = sourcePosition;
+        document.getElementById('sourceValue').textContent = sourcePosition;
+        updateMaterialArrays();
+        resetFields();
+        alert('Geometri yüklendi!');
+      } else {
+        alert('Kaydedilmiş geometri bulunamadı.');
+      }
+    });
+
+    // Initialize everything
+    setupMaterialSelector();
+    setupPresets();
+    initSimulation();
+    animate();
+  </script>
+</body>
+</html>
